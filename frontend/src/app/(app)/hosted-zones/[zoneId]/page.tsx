@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
@@ -12,6 +12,7 @@ import Badge from "@cloudscape-design/components/badge";
 import CButton from "@cloudscape-design/components/button";
 import CTabs from "@cloudscape-design/components/tabs";
 import Input from "@cloudscape-design/components/input";
+import ButtonDropdown from "@cloudscape-design/components/button-dropdown";
 import ExpandableSection from "@cloudscape-design/components/expandable-section";
 import PropertyFilter, {
   type PropertyFilterProps,
@@ -322,6 +323,10 @@ function RecordsTab({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Sorting state
   const [sortingColumn, setSortingColumn] = useState<TableProps.SortingColumn<DnsRecord> | undefined>();
@@ -427,6 +432,34 @@ function RecordsTab({
       notify("error", err instanceof ApiError ? err.message : "Delete failed", "Could not delete record");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const res = await api.importZoneFile(zone.id, file);
+      notify("success", res.message || "Imported successfully");
+      refresh();
+    } catch (err) {
+      notify("error", err instanceof ApiError ? err.message : "Import failed");
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleExport = async (format: "json" | "bind") => {
+    setExporting(true);
+    try {
+      await api.exportZoneFile(zone.id, format, zone.name);
+      notify("success", `Exported as ${format.toUpperCase()}`);
+    } catch (err) {
+      notify("error", err instanceof ApiError ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -574,7 +607,24 @@ function RecordsTab({
                 >
                   Delete record
                 </CButton>
-                <CButton onClick={openCreate}>Import zone file</CButton>
+                <ButtonDropdown
+                  items={[
+                    { text: "Export as BIND", id: "bind" },
+                    { text: "Export as JSON", id: "json" },
+                  ]}
+                  onItemClick={({ detail }) => handleExport(detail.id as "bind" | "json")}
+                  loading={exporting}
+                >
+                  Export zone
+                </ButtonDropdown>
+                <input
+                  type="file"
+                  accept=".txt,.zone"
+                  style={{ display: "none" }}
+                  ref={fileInputRef}
+                  onChange={handleImport}
+                />
+                <CButton onClick={() => fileInputRef.current?.click()} loading={importing}>Import zone file</CButton>
                 <CButton variant="primary" onClick={openCreate}>
                   Create record
                 </CButton>

@@ -182,3 +182,53 @@ export function deleteRecord(zoneId: string, recordId: string) {
     method: "DELETE",
   });
 }
+
+export async function importZoneFile(zoneId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}/api/hosted-zones/${zoneId}/import`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = "Import failed";
+    try {
+      const data = await res.json();
+      msg = data.detail || msg;
+    } catch {}
+    throw new ApiError(res.status, msg);
+  }
+  return res.json();
+}
+
+export async function exportZoneFile(zoneId: string, format: "json" | "bind", zoneName: string) {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}/api/hosted-zones/${zoneId}/export?format=${format}`, {
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new ApiError(res.status, "Export failed");
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${zoneName}.${format === "json" ? "json" : "txt"}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+

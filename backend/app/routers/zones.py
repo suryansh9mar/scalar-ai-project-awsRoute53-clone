@@ -1,5 +1,10 @@
 """Hosted zone CRUD endpoints."""
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi.responses import PlainTextResponse, JSONResponse
+import io
+import json
+import dns.zone
+from dns.exception import DNSException
 from sqlalchemy import func
 from sqlalchemy.orm import Session as DbSession
 
@@ -126,3 +131,84 @@ def _add_default_ns_records(db: DbSession, zone: models.HostedZone) -> None:
             ttl=172800,
         )
     )
+
+
+@router.post("/{zone_id}/import")
+def import_zone(
+    zone_id: str,
+    file: UploadFile = File(...),
+    db: DbSession = Depends(get_db)
+):
+    """Import DNS records from a BIND zone file."""
+    zone = _get_zone_or_404(db, zone_id)
+    content = file.file.read().decode("utf-8")
+    
+    try:
+        origin = zone.name if zone.name.endswith('.') else zone.name + '.'
+        dns_zone = dns.zone.from_text(content, origin=origin, relativize=False)
+    except DNSException as e:
+        raise HTTPException(status_code=400, detail=f"Invalid BIND zone file: {str(e)}")
+
+    from ..ids import new_record_id
+    
+    added = 0
+    for name, node in dns_zone.nodes.items():
+        record_name = str(name).strip('.')
+        if record_name == zone.name:
+            # If the name is exactly the zone name (apex), we can keep it as is
+            pass
+            
+        for rdataset in node.rdatasets:
+            rtype = dns.rdatatype.to_text(rdataset.rdtype)
+            if rtype not in schemas.RECORD_TYPES:
+                continue
+                
+            for rdata in rdataset:
+                val = str(rdata)
+                record = models.DnsRecord(
+                    id=new_record_id(),
+                    zone_id=zone_id,
+                    name=record_name,
+                    type=rtype,
+                    value=val,
+                    ttl=rdataset.ttl,
+                )
+                db.add(record)
+                added += 1
+                
+    db.commit()
+    return {"message": f"Successfully imported {added} records"}
+
+
+@router.get("/{zone_id}/export")
+def export_zone(
+    zone_id: str,
+    format: str = Query(default="bind", description="Format: 'json' or 'bind'"),
+    db: DbSession = Depends(get_db)
+):
+    """Export the hosted zone records as JSON or BIND format."""
+    zone = _get_zone_or_404(db, zone_id)
+    records = db.query(models.DnsRecord).filter(models.DnsRecord.zone_id == zone_id).all()
+    
+    if format == "json":
+        items = [schemas.DnsRecordOut.model_validate(r).model_dump(mode='json') for r in records]
+        return JSONResponse(content={"zone": schemas.HostedZoneOut.model_validate(zone).model_dump(mode='json'), "records": items})
+    
+    elif format == "bind":
+        origin = zone.name if zone.name.endswith('.') else zone.name + '.'
+        dns_zone = dns.zone.Zone(origin=origin)
+        
+        for r in records:
+            r_name = r.name + '.' if r.name else origin
+            try:
+                rdataset = dns_zone.find_rdataset(r_name, r.type, create=True)
+                rdata = dns.rdata.from_text(dns.rdataclass.IN, dns.rdatatype.from_text(r.type), r.value, origin=dns.name.from_text(origin))
+                rdataset.add(rdata, ttl=r.ttl)
+            except Exception:
+                pass
+                
+        bind_text = dns_zone.to_text(relativize=False).decode("utf-8")
+        return PlainTextResponse(content=bind_text)
+        
+    else:
+        raise HTTPException(status_code=400, detail="Invalid format specified. Must be 'json' or 'bind'")
