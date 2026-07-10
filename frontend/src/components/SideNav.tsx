@@ -4,43 +4,89 @@ import { usePathname } from "next/navigation";
 import SideNavigation, {
   type SideNavigationProps,
 } from "@cloudscape-design/components/side-navigation";
+import Badge from "@cloudscape-design/components/badge";
 
 const navItems: SideNavigationProps.Item[] = [
   { type: "link", text: "Dashboard", href: "/dashboard" },
   { type: "divider" },
   { type: "link", text: "Hosted zones", href: "/hosted-zones" },
   { type: "link", text: "Health checks", href: "/health-checks" },
+  { type: "link", text: "Profiles", href: "/profiles" },
   { type: "divider" },
+  {
+    type: "section",
+    text: "Global Resolver",
+    defaultExpanded: true,
+    items: [
+      {
+        type: "link",
+        text: "Global resolvers",
+        href: "/resolver/global",
+        info: <Badge color="blue">New</Badge>,
+      },
+      {
+        type: "link",
+        text: "Shared DNS views",
+        href: "/resolver/shared-views",
+        info: <Badge color="blue">New</Badge>,
+      },
+    ],
+  },
+  {
+    type: "section",
+    text: "VPC Resolver",
+    defaultExpanded: true,
+    items: [
+      { type: "link", text: "VPCs", href: "/resolver/vpcs" },
+      { type: "link", text: "Inbound endpoints", href: "/resolver/inbound" },
+      { type: "link", text: "Outbound endpoints", href: "/resolver/outbound" },
+      { type: "link", text: "Rules", href: "/resolver/rules" },
+      { type: "link", text: "Query logging", href: "/resolver/query-logging" },
+      { type: "link", text: "Outposts", href: "/resolver/outposts" },
+    ],
+  },
+  {
+    type: "section",
+    text: "Domains",
+    defaultExpanded: true,
+    items: [
+      { type: "link", text: "Registered domains", href: "/domains" },
+      { type: "link", text: "Requests", href: "/domains/requests" },
+    ],
+  },
+  {
+    type: "section",
+    text: "IP-based routing",
+    defaultExpanded: true,
+    items: [
+      { type: "link", text: "CIDR collections", href: "/ip-routing/cidr" },
+    ],
+  },
   {
     type: "section",
     text: "Traffic flow",
-    items: [{ type: "link", text: "Traffic policies", href: "/traffic-policies" }],
     defaultExpanded: true,
+    items: [
+      { type: "link", text: "Traffic policies", href: "/traffic-policies" },
+      { type: "link", text: "Policy records", href: "/traffic-policies/records" },
+    ],
   },
-  {
-    type: "section",
-    text: "Resolver",
-    items: [{ type: "link", text: "Resolver", href: "/resolver" }],
-    defaultExpanded: true,
-  },
-  { type: "divider" },
-  { type: "link", text: "Profiles", href: "/profiles" },
 ];
+
+/** Collect all hrefs from a nav item tree (recursive). */
+function collectHrefs(items: ReadonlyArray<SideNavigationProps.Item>): string[] {
+  return items.flatMap((item) => {
+    if (item.type === "link") return [item.href];
+    if (item.type === "section") return collectHrefs(item.items);
+    return [];
+  });
+}
 
 export function SideNav() {
   const pathname = usePathname();
 
-  // Determine active href: find the most specific link that matches the current path
   const activeHref =
-    navItems
-      .flatMap((item) => {
-        if (item.type === "link") return [item.href];
-        if (item.type === "section")
-          return item.items
-            .filter((i): i is SideNavigationProps.Link => i.type === "link")
-            .map((i) => i.href);
-        return [];
-      })
+    collectHrefs(navItems)
       .filter((href) => pathname === href || pathname.startsWith(href + "/"))
       .sort((a, b) => b.length - a.length)[0] ?? "/hosted-zones";
 
@@ -50,9 +96,6 @@ export function SideNav() {
       items={navItems}
       activeHref={activeHref}
       onFollow={(e) => {
-        // Prevent default to use Next.js router — but since Cloudscape uses <a> tags
-        // with standard href, Next.js Link interceptor handles it automatically
-        // when using the AppLayout's navigation prop.
         e.preventDefault();
         window.location.href = e.detail.href;
       }}
