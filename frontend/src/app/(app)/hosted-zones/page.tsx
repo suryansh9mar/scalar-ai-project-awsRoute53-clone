@@ -42,6 +42,11 @@ export default function HostedZonesPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
+  
+  const [editOpen, setEditOpen] = useState(false);
+  const [editComment, setEditComment] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const { setSplitPanelOpen, setSplitPanelContent, setSplitPanelHeader } = useSplitPanel();
 
   // Sorting state
@@ -82,7 +87,10 @@ export default function HostedZonesPage() {
       setSplitPanelContent(
         <SpaceBetween size="l">
           <div>
-            <CButton onClick={() => router.push(`/hosted-zones/${z.id}`)}>
+            <CButton onClick={() => {
+              setEditComment(z.comment || "");
+              setEditOpen(true);
+            }}>
               Edit hosted zone
             </CButton>
           </div>
@@ -124,7 +132,8 @@ export default function HostedZonesPage() {
     onCreate: () => router.push("/hosted-zones/create"),
     onEdit: () => {
       if (selectedItems.length === 1) {
-        router.push(`/hosted-zones/${selectedItems[0].id}`);
+        setEditComment(selectedItems[0].comment || "");
+        setEditOpen(true);
       }
     },
     onDelete: () => {
@@ -156,6 +165,25 @@ export default function HostedZonesPage() {
       );
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (selectedItems.length !== 1) return;
+    setSavingEdit(true);
+    try {
+      await api.updateZone(selectedItems[0].id, editComment.trim());
+      notify("success", "Hosted zone description updated.");
+      setEditOpen(false);
+      await load();
+    } catch (err) {
+      notify(
+        "error",
+        err instanceof ApiError ? err.message : "Update failed",
+        "Could not update hosted zone"
+      );
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -386,6 +414,40 @@ export default function HostedZonesPage() {
               value={deleteInput}
               onChange={({ detail }) => setDeleteInput(detail.value)}
               placeholder="delete"
+            />
+          </Box>
+        </SpaceBetween>
+      </Modal>
+
+      <Modal
+        title="Edit hosted zone"
+        open={editOpen}
+        onClose={() => {
+          if (!savingEdit) setEditOpen(false);
+        }}
+        footer={
+          <>
+            <Button onClick={() => setEditOpen(false)} disabled={savingEdit}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleEditSave} loading={savingEdit}>
+              Save changes
+            </Button>
+          </>
+        }
+      >
+        <SpaceBetween size="m">
+          <p style={{ margin: 0 }}>
+            Editing description for <strong>{selectedItems[0]?.name}</strong>
+          </p>
+          <Box>
+            <Box variant="p" padding={{ bottom: "xxs" }}>
+              Description
+            </Box>
+            <Input
+              value={editComment}
+              onChange={({ detail }) => setEditComment(detail.value)}
+              placeholder="Description"
             />
           </Box>
         </SpaceBetween>
