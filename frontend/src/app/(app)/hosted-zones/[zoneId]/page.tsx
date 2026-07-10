@@ -11,6 +11,7 @@ import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import Badge from "@cloudscape-design/components/badge";
 import CButton from "@cloudscape-design/components/button";
 import CTabs from "@cloudscape-design/components/tabs";
+import Input from "@cloudscape-design/components/input";
 import ExpandableSection from "@cloudscape-design/components/expandable-section";
 import PropertyFilter, {
   type PropertyFilterProps,
@@ -319,6 +320,7 @@ function RecordsTab({
   const router = useRouter();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   // Sorting state
@@ -419,6 +421,7 @@ function RecordsTab({
       }
       notify("success", `Deleted ${selectedItems.length} record${selectedItems.length > 1 ? "s" : ""}.`);
       setConfirmOpen(false);
+      setDeleteInput("");
       refresh();
     } catch (err) {
       notify("error", err instanceof ApiError ? err.message : "Delete failed", "Could not delete record");
@@ -564,7 +567,10 @@ function RecordsTab({
                 />
                 <CButton
                   disabled={selectedItems.length === 0}
-                  onClick={() => setConfirmOpen(true)}
+                  onClick={() => {
+                    setDeleteInput("");
+                    setConfirmOpen(true);
+                  }}
                 >
                   Delete record
                 </CButton>
@@ -648,27 +654,48 @@ function RecordsTab({
       <Modal
         title="Delete record"
         open={confirmOpen}
-        onClose={() => !deleting && setConfirmOpen(false)}
+        onClose={() => {
+          if (!deleting) {
+            setConfirmOpen(false);
+            setDeleteInput("");
+          }
+        }}
         footer={
           <>
-            <CButton onClick={() => setConfirmOpen(false)} disabled={deleting}>
+            <CButton onClick={() => {
+              setConfirmOpen(false);
+              setDeleteInput("");
+            }} disabled={deleting}>
               Cancel
             </CButton>
-            <CButton variant="primary" onClick={handleDelete} loading={deleting}>
+            <CButton variant="primary" onClick={handleDelete} loading={deleting} disabled={deleteInput !== "delete"}>
               Delete
             </CButton>
           </>
         }
       >
-        <p>
-          Delete{" "}
-          <strong>
-            {selectedItems.length === 1
-              ? `${selectedItems[0].name} (${selectedItems[0].type})`
-              : `${selectedItems.length} records`}
-          </strong>
-          ? This action cannot be undone.
-        </p>
+        <SpaceBetween size="m">
+          <p style={{ margin: 0 }}>
+            Delete{" "}
+            <strong>
+              {selectedItems.length === 1
+                ? `${selectedItems[0].name} (${selectedItems[0].type})`
+                : `${selectedItems.length} records`}
+            </strong>
+            ? This action cannot be undone.
+          </p>
+          
+          <Box>
+            <Box variant="p" padding={{ bottom: "xxs" }} color="text-status-error">
+              To confirm deletion, type <i>delete</i> in the field below.
+            </Box>
+            <Input
+              value={deleteInput}
+              onChange={({ detail }) => setDeleteInput(detail.value)}
+              placeholder="delete"
+            />
+          </Box>
+        </SpaceBetween>
       </Modal>
     </>
   );

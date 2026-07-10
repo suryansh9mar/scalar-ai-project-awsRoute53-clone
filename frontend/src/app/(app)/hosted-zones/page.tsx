@@ -11,6 +11,7 @@ import CTable, { type TableProps } from "@cloudscape-design/components/table";
 import CPagination from "@cloudscape-design/components/pagination";
 import CButton from "@cloudscape-design/components/button";
 import Box from "@cloudscape-design/components/box";
+import Input from "@cloudscape-design/components/input";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
@@ -37,8 +38,9 @@ export default function HostedZonesPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Zone[]>([]);
-  const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const { setSplitPanelOpen, setSplitPanelContent, setSplitPanelHeader } = useSplitPanel();
 
   // Sorting state
@@ -120,6 +122,7 @@ export default function HostedZonesPage() {
         `Deleted ${selectedItems.length} hosted zone${selectedItems.length > 1 ? "s" : ""}.`
       );
       setConfirmOpen(false);
+      setDeleteInput("");
       await load();
     } catch (err) {
       notify(
@@ -197,7 +200,10 @@ export default function HostedZonesPage() {
               <Button
                 variant="danger"
                 disabled={selectedItems.length === 0}
-                onClick={() => setConfirmOpen(true)}
+                onClick={() => {
+                  setDeleteInput("");
+                  setConfirmOpen(true);
+                }}
               >
                 Delete zone
               </Button>
@@ -307,37 +313,58 @@ export default function HostedZonesPage() {
       <Modal
         title="Delete hosted zone"
         open={confirmOpen}
-        onClose={() => !deleting && setConfirmOpen(false)}
+        onClose={() => {
+          if (!deleting) {
+            setConfirmOpen(false);
+            setDeleteInput("");
+          }
+        }}
         footer={
           <>
-            <Button onClick={() => setConfirmOpen(false)} disabled={deleting}>
+            <Button onClick={() => {
+              setConfirmOpen(false);
+              setDeleteInput("");
+            }} disabled={deleting}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleDelete} loading={deleting}>
+            <Button variant="danger" onClick={handleDelete} loading={deleting} disabled={deleteInput !== "delete"}>
               Delete
             </Button>
           </>
         }
       >
-        <p>
-          Delete{" "}
-          <strong>
-            {selectedItems.length === 1
-              ? selectedItems[0].name
-              : `${selectedItems.length} hosted zones`}
-          </strong>
-          ? This permanently removes the zone and all of its DNS records. This action cannot be
-          undone.
-        </p>
-        {selectedItems.length > 1 && (
-          <ul>
-            {selectedItems.map((z) => (
-              <li key={z.id} className="mono">
-                {z.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <SpaceBetween size="m">
+          <p style={{ margin: 0 }}>
+            Delete{" "}
+            <strong>
+              {selectedItems.length === 1
+                ? selectedItems[0].name
+                : `${selectedItems.length} hosted zones`}
+            </strong>
+            ? This permanently removes the zone and all of its DNS records. This action cannot be
+            undone.
+          </p>
+          {selectedItems.length > 1 && (
+            <ul style={{ marginTop: 0, marginBottom: 0 }}>
+              {selectedItems.map((z) => (
+                <li key={z.id} className="mono">
+                  {z.name}
+                </li>
+              ))}
+            </ul>
+          )}
+          
+          <Box>
+            <Box variant="p" padding={{ bottom: "xxs" }} color="text-status-error">
+              To confirm deletion, type <i>delete</i> in the field below.
+            </Box>
+            <Input
+              value={deleteInput}
+              onChange={({ detail }) => setDeleteInput(detail.value)}
+              placeholder="delete"
+            />
+          </Box>
+        </SpaceBetween>
       </Modal>
     </ContentLayout>
   );
