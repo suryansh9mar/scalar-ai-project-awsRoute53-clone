@@ -78,6 +78,7 @@ export default function ZoneDetailPage() {
   const [zoneLoading, setZoneLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("records");
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [editingDetails, setEditingDetails] = useState(false);
 
   const loadZone = useCallback(async () => {
     try {
@@ -169,10 +170,22 @@ export default function ZoneDetailPage() {
           onChange={({ detail }) => setDetailsExpanded(detail.expanded)}
           headerActions={
             <CButton
-             variant="normal">Edit hosted zone</CButton>
+              variant="normal"
+              onClick={() => {
+                setDetailsExpanded(true);
+                setEditingDetails(true);
+              }}
+            >
+              Edit hosted zone
+            </CButton>
           }
         >
-          <DetailsContent zone={zone} onUpdated={loadZone} />
+          <DetailsContent
+            zone={zone}
+            onUpdated={loadZone}
+            editing={editingDetails}
+            setEditing={setEditingDetails}
+          />
         </ExpandableSection>
 
         {/* ── Tabs ── */}
@@ -228,14 +241,23 @@ export default function ZoneDetailPage() {
 function DetailsContent({
   zone,
   onUpdated,
+  editing,
+  setEditing,
 }: {
   zone: Zone;
   onUpdated: () => void;
+  editing: boolean;
+  setEditing: (editing: boolean) => void;
 }) {
   const { notify } = useNotifications();
-  const [editing, setEditing] = useState(false);
   const [comment, setComment] = useState(zone.comment);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (editing) {
+      setComment(zone.comment);
+    }
+  }, [editing, zone.comment]);
 
   const save = async () => {
     setSaving(true);
