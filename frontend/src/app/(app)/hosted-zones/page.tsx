@@ -7,15 +7,17 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import TextFilter from "@cloudscape-design/components/text-filter";
+import CTable, { type TableProps } from "@cloudscape-design/components/table";
+import CPagination from "@cloudscape-design/components/pagination";
+import CButton from "@cloudscape-design/components/button";
+import Box from "@cloudscape-design/components/box";
+import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { Select } from "@/components/Field";
 import { Modal } from "@/components/Modal";
-import { Pagination } from "@/components/Pagination";
-import { Container, EmptyState, LoadingBlock } from "@/components/Primitives";
-import { Column, Table } from "@/components/Table";
+import { EmptyState, LoadingBlock } from "@/components/Primitives";
 import { useSplitPanel } from "@/lib/split-panel-context";
-import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useDebounce } from "@/lib/useDebounce";
@@ -34,10 +36,14 @@ export default function HostedZonesPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Zone[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { setSplitPanelOpen, setSplitPanelContent, setSplitPanelHeader } = useSplitPanel();
+
+  // Sorting state
+  const [sortingColumn, setSortingColumn] = useState<TableProps.SortingColumn<Zone> | undefined>();
+  const [sortingDescending, setSortingDescending] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -52,7 +58,7 @@ export default function HostedZonesPage() {
       });
       setZones(res.items);
       setTotal(res.total);
-      setSelected(new Set());
+      setSelectedItems([]);
     } catch (err) {
       if (err instanceof ApiError && err.status !== 401) {
         notify("error", err.message, "Could not load hosted zones");
@@ -65,23 +71,10 @@ export default function HostedZonesPage() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter]);
 
-  const toggleRow = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const toggleAll = (checked: boolean) =>
-    setSelected(checked ? new Set(zones.map((z) => z.id)) : new Set());
-
-  const selectedZones = zones.filter((z) => selected.has(z.id));
-
   // Sync SplitPanel with selected zones
   useEffect(() => {
-    if (selectedZones.length === 1) {
-      const z = selectedZones[0];
+    if (selectedItems.length === 1) {
+      const z = selectedItems[0];
       setSplitPanelHeader("Hosted zone details");
       setSplitPanelContent(
         <SpaceBetween size="l">
@@ -98,15 +91,15 @@ export default function HostedZonesPage() {
         </SpaceBetween>
       );
       setSplitPanelOpen(true);
-    } else if (selectedZones.length > 1) {
-      setSplitPanelHeader(`${selectedZones.length} zones selected`);
+    } else if (selectedItems.length > 1) {
+      setSplitPanelHeader(`${selectedItems.length} zones selected`);
       setSplitPanelContent(null);
       setSplitPanelOpen(true);
     } else {
       setSplitPanelContent(null);
       setSplitPanelOpen(false);
     }
-  }, [selected.size, zones]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedItems.length, zones]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup on unmount
   useEffect(() => {
@@ -119,12 +112,12 @@ export default function HostedZonesPage() {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      for (const zone of selectedZones) {
+      for (const zone of selectedItems) {
         await api.deleteZone(zone.id);
       }
       notify(
         "success",
-        `Deleted ${selectedZones.length} hosted zone${selectedZones.length > 1 ? "s" : ""}.`
+        `Deleted ${selectedItems.length} hosted zone${selectedItems.length > 1 ? "s" : ""}.`
       );
       setConfirmOpen(false);
       await load();
@@ -139,25 +132,58 @@ export default function HostedZonesPage() {
     }
   };
 
-  const columns: Column<Zone>[] = [
+  // Client-side sort
+  const sortField = sortingColumn?.sortingField as keyof Zone | undefined;
+  const sortedZones = sortField
+    ? [...zones].sort((a, b) => {
+        const aVal = String(a[sortField] ?? "");
+        const bVal = String(b[sortField] ?? "");
+        const cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: "base" });
+        return sortingDescending ? -cmp : cmp;
+      })
+    : zones;
+
+  const columnDefinitions: TableProps.ColumnDefinition<Zone>[] = [
     {
-      key: "name",
+      id: "name",
       header: "Hosted zone name",
-      render: (z) => (
+      cell: (z) => (
         <Link href={`/hosted-zones/${z.id}`} className="table__link">
           {z.name}
         </Link>
       ),
+      sortingField: "name",
+      isRowHeader: true,
     },
-    { key: "type", header: "Type", render: (z) => `${z.type} hosted zone` },
-    { key: "created_by", header: "Created by", render: () => "Route 53" },
-    { key: "record_count", header: "Record count", render: (z) => z.record_count },
     {
-      key: "description",
-      header: "Description",
-      render: (z) => z.comment || <span className="text-secondary">-</span>,
+      id: "type",
+      header: "Type",
+      cell: (z) => `${z.type} hosted zone`,
+      sortingField: "type",
     },
-    { key: "id", header: "Hosted zone ID", render: (z) => <span className="mono">{z.id}</span> },
+    {
+      id: "created_by",
+      header: "Created by",
+      cell: () => "Route 53",
+    },
+    {
+      id: "record_count",
+      header: "Record count",
+      cell: (z) => z.record_count,
+      sortingField: "record_count",
+    },
+    {
+      id: "description",
+      header: "Description",
+      cell: (z) => z.comment || <span className="text-secondary">-</span>,
+      sortingField: "comment",
+    },
+    {
+      id: "id",
+      header: "Hosted zone ID",
+      cell: (z) => <span className="mono">{z.id}</span>,
+      sortingField: "id",
+    },
   ];
 
   return (
@@ -170,7 +196,7 @@ export default function HostedZonesPage() {
               <Button onClick={load} disabled={loading}>Refresh</Button>
               <Button
                 variant="danger"
-                disabled={selected.size === 0}
+                disabled={selectedItems.length === 0}
                 onClick={() => setConfirmOpen(true)}
               >
                 Delete zone
@@ -190,62 +216,93 @@ export default function HostedZonesPage() {
     >
       <Breadcrumbs items={[{ label: "Route 53", href: "/hosted-zones" }, { label: "Hosted zones" }]} />
 
-      <Container title="Hosted zones" count={total} flush>
-        <div className="filter-row">
-          <TextFilter
-            filteringText={search}
-            filteringPlaceholder="Search hosted zones by domain name"
-            onChange={({ detail }) => setSearch(detail.filteringText)}
-            countText={total > 0 ? `${total} match${total === 1 ? "" : "es"}` : undefined}
-          />
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter((e as React.ChangeEvent<HTMLSelectElement>).target.value)}
-            aria-label="Filter by type"
-          >
-            <option value="">Any type</option>
-            <option value="Public">Public hosted zone</option>
-            <option value="Private">Private hosted zone</option>
-          </Select>
-        </div>
-
-        {loading ? (
-          <LoadingBlock label="Loading hosted zones" />
-        ) : (
-          <>
-            <Table
-              columns={columns}
-              rows={zones}
-              rowKey={(z) => z.id}
-              selectable
-              selectedIds={selected}
-              onToggleRow={toggleRow}
-              onToggleAll={toggleAll}
-              empty={
-                <EmptyState
-                  title="No hosted zones"
-                  message={
-                    search || typeFilter
-                      ? "No hosted zones match your filters."
-                      : "Create a hosted zone to start managing DNS records."
-                  }
-                  action={
-                    <Button
-                      variant="primary"
-                      onClick={() => router.push("/hosted-zones/create")}
-                    >
-                      Create hosted zone
-                    </Button>
-                  }
+      <CTable
+        variant="container"
+        loading={loading}
+        loadingText="Loading hosted zones"
+        items={sortedZones}
+        trackBy="id"
+        selectionType="multi"
+        selectedItems={selectedItems}
+        onSelectionChange={({ detail }) => setSelectedItems(detail.selectedItems)}
+        sortingColumn={sortingColumn}
+        sortingDescending={sortingDescending}
+        onSortingChange={({ detail }) => {
+          setSortingColumn(detail.sortingColumn);
+          setSortingDescending(detail.isDescending ?? false);
+        }}
+        columnDefinitions={columnDefinitions}
+        header={
+          <Header
+            variant="h2"
+            counter={`(${total})`}
+            actions={
+              <SpaceBetween direction="horizontal" size="xs">
+                <CButton
+                  iconName="refresh"
+                  variant="icon"
+                  ariaLabel="Refresh"
+                  onClick={load}
+                  disabled={loading}
                 />
-              }
+              </SpaceBetween>
+            }
+          >
+            Hosted zones
+          </Header>
+        }
+        filter={
+          <div className="filter-row">
+            <TextFilter
+              filteringText={search}
+              filteringPlaceholder="Search hosted zones by domain name"
+              onChange={({ detail }) => setSearch(detail.filteringText)}
+              countText={total > 0 ? `${total} match${total === 1 ? "" : "es"}` : undefined}
             />
-            {total > 0 && (
-              <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
-            )}
-          </>
-        )}
-      </Container>
+            <Select
+              value={typeFilter}
+              onChange={(e) =>
+                setTypeFilter((e as React.ChangeEvent<HTMLSelectElement>).target.value)
+              }
+              aria-label="Filter by type"
+            >
+              <option value="">Any type</option>
+              <option value="Public">Public hosted zone</option>
+              <option value="Private">Private hosted zone</option>
+            </Select>
+          </div>
+        }
+        pagination={
+          total > 0 ? (
+            <CPagination
+              currentPageIndex={page}
+              pagesCount={Math.ceil(total / PAGE_SIZE)}
+              onChange={({ detail }) => setPage(detail.currentPageIndex)}
+            />
+          ) : undefined
+        }
+        empty={
+          <Box textAlign="center" color="inherit" padding="l">
+            <Box variant="strong" textAlign="center" color="inherit" padding="s">
+              No hosted zones
+            </Box>
+            <Box variant="p" padding={{ bottom: "s" }} color="inherit">
+              {search || typeFilter
+                ? "No hosted zones match your filters."
+                : "Create a hosted zone to start managing DNS records."}
+            </Box>
+            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+              <CButton
+                variant="primary"
+                onClick={() => router.push("/hosted-zones/create")}
+              >
+                Create hosted zone
+              </CButton>
+            </SpaceBetween>
+          </Box>
+        }
+        stickyHeader
+      />
 
       <Modal
         title="Delete hosted zone"
@@ -253,24 +310,31 @@ export default function HostedZonesPage() {
         onClose={() => !deleting && setConfirmOpen(false)}
         footer={
           <>
-            <Button onClick={() => setConfirmOpen(false)} disabled={deleting}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} loading={deleting}>Delete</Button>
+            <Button onClick={() => setConfirmOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} loading={deleting}>
+              Delete
+            </Button>
           </>
         }
       >
         <p>
           Delete{" "}
           <strong>
-            {selectedZones.length === 1
-              ? selectedZones[0].name
-              : `${selectedZones.length} hosted zones`}
+            {selectedItems.length === 1
+              ? selectedItems[0].name
+              : `${selectedItems.length} hosted zones`}
           </strong>
-          ? This permanently removes the zone and all of its DNS records. This action cannot be undone.
+          ? This permanently removes the zone and all of its DNS records. This action cannot be
+          undone.
         </p>
-        {selectedZones.length > 1 && (
+        {selectedItems.length > 1 && (
           <ul>
-            {selectedZones.map((z) => (
-              <li key={z.id} className="mono">{z.name}</li>
+            {selectedItems.map((z) => (
+              <li key={z.id} className="mono">
+                {z.name}
+              </li>
             ))}
           </ul>
         )}

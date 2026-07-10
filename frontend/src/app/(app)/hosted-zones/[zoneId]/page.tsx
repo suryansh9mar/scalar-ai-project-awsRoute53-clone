@@ -15,7 +15,7 @@ import ExpandableSection from "@cloudscape-design/components/expandable-section"
 import PropertyFilter, {
   type PropertyFilterProps,
 } from "@cloudscape-design/components/property-filter";
-import Table from "@cloudscape-design/components/table";
+import Table, { type TableProps } from "@cloudscape-design/components/table";
 import Pagination from "@cloudscape-design/components/pagination";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Modal } from "@/components/Modal";
@@ -321,6 +321,10 @@ function RecordsTab({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Sorting state
+  const [sortingColumn, setSortingColumn] = useState<TableProps.SortingColumn<DnsRecord> | undefined>();
+  const [sortingDescending, setSortingDescending] = useState(false);
+
   // Property filter state
   const [filterQuery, setFilterQuery] = useState<PropertyFilterProps.Query>({
     tokens: [],
@@ -427,7 +431,7 @@ function RecordsTab({
   const aliasToken = filterQuery.tokens.find((t) => t.propertyKey === "alias");
   const routingToken = filterQuery.tokens.find((t) => t.propertyKey === "routing_policy");
 
-  const visibleRecords = records.filter((r) => {
+  const filteredRecords = records.filter((r) => {
     if (aliasToken) {
       const isAlias = (r.type === "A" || r.type === "AAAA" || r.type === "CNAME") ? "Yes" : "No";
       if (aliasToken.operator === "=" && isAlias !== aliasToken.value) return false;
@@ -440,6 +444,17 @@ function RecordsTab({
     return true;
   });
 
+  // Client-side sort
+  const sortField = sortingColumn?.sortingField as keyof DnsRecord | undefined;
+  const visibleRecords = sortField
+    ? [...filteredRecords].sort((a, b) => {
+        const aVal = String(a[sortField] ?? "");
+        const bVal = String(b[sortField] ?? "");
+        const cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: "base" });
+        return sortingDescending ? -cmp : cmp;
+      })
+    : filteredRecords;
+
   return (
     <>
       <Table
@@ -451,6 +466,12 @@ function RecordsTab({
         selectionType="multi"
         selectedItems={selectedItems}
         onSelectionChange={({ detail }) => setSelectedItems(detail.selectedItems)}
+        sortingColumn={sortingColumn}
+        sortingDescending={sortingDescending}
+        onSortingChange={({ detail }) => {
+          setSortingColumn(detail.sortingColumn);
+          setSortingDescending(detail.isDescending ?? false);
+        }}
         columnDefinitions={[
           {
             id: "name",
@@ -512,6 +533,7 @@ function RecordsTab({
           },
         ]}
         sortingDisabled={false}
+        resizableColumns
         header={
           <Header
             variant="h2"

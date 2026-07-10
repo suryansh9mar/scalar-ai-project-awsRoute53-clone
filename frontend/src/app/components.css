@@ -626,3 +626,46 @@
   color: var(--error);
   font-size: 14px;
 }
+
+/* ============================================================
+   AWS TopNavigation logo — force correct display size
+   ============================================================ */
+#top-header .awsui-top-navigation__logo img,
+#top-header [class*="logo"] img,
+#top-header img[alt="AWS"] {
+  height: 32px !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain;
+}
+
+/* ============================================================
+   Cloudscape primary buttons → AWS orange (#ff9900)
+   Targets the Cloudscape button variant="primary" class
+   ============================================================ */
+button.awsui-button-variant-primary,
+.awsui button[class*="variant-primary"],
+[class*="awsui-button"][class*="variant-primary"] {
+  background: #ff9900 !important;
+  border-color: #dd8800 !important;
+  color: #0f141a !important;
+}
+[class*="awsui-button"][class*="variant-primary"]:hover {
+  background: #e68a00 !important;
+  border-color: #cc7a00 !important;
+}
+[class*="awsui-button"][class*="variant-primary"]:active {
+  background: #cc7a00 !important;
+}
+
+/* Cloudscape internal design tokens for primary button color */
+:root {
+  --awsui-color-background-button-primary-default: #ff9900;
+  --awsui-color-background-button-primary-hover: #e68a00;
+  --awsui-color-background-button-primary-active: #cc7a00;
+  --awsui-color-border-button-primary-default: #dd8800;
+  --awsui-color-border-button-primary-hover: #cc7a00;
+  --awsui-color-text-button-primary-default: #0f141a;
+  --awsui-color-text-button-primary-hover: #0f141a;
+}
+
