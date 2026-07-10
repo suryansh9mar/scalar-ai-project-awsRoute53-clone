@@ -60,11 +60,19 @@ export function TopHeader() {
             ariaLabel: "Help",
           },
           {
-            type: "button",
-            iconName: theme === "dark" ? "status-positive" : "status-stopped",
-            title: theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
-            ariaLabel: theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
-            onClick: toggleTheme,
+            type: "menu-dropdown",
+            iconName: "settings",
+            title: "Settings",
+            ariaLabel: "Settings",
+            onItemClick: ({ detail }) => {
+              if (detail.id === "toggle-theme") toggleTheme();
+            },
+            items: [
+              {
+                id: "toggle-theme",
+                text: theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+              },
+            ],
           },
           {
             type: "button",
