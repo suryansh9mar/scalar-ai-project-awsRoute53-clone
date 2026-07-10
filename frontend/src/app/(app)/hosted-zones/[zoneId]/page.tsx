@@ -24,6 +24,7 @@ import { Modal } from "@/components/Modal";
 import { Select, Textarea } from "@/components/Field";
 import { EmptyState, LoadingBlock } from "@/components/Primitives";
 import { useSplitPanel } from "@/lib/split-panel-context";
+import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useDebounce } from "@/lib/useDebounce";
@@ -344,6 +345,7 @@ function RecordsTab({
   const debouncedSearch = useDebounce(searchToken?.value ?? "", 300);
   const typeFilter = typeToken?.value ?? "";
 
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -377,19 +379,25 @@ function RecordsTab({
       setSplitPanelHeader("Record details");
       setSplitPanelContent(
         <SpaceBetween size="l">
+          <div>
+            <CButton onClick={() => router.push(`/hosted-zones/${zone.id}/records/${r.id}/edit`)}>
+              Edit record
+            </CButton>
+          </div>
           <KeyValuePairs
-            columns={2}
+            columns={1}
             items={[
               { label: "Record name", value: r.name },
-              { label: "Type", value: r.type },
+              { label: "Record type", value: r.type },
+              { 
+                label: "Value / Route traffic to", 
+                value: <div className="value-cell" style={{ marginTop: 4 }}>{r.value}</div> 
+              },
+              { label: "Alias", value: r.type === "A" || r.type === "AAAA" || r.type === "CNAME" ? "Yes" : "No" },
+              { label: "TTL (seconds)", value: r.ttl.toLocaleString() },
               { label: "Routing policy", value: r.routing_policy },
-              { label: "TTL", value: `${r.ttl} seconds` },
             ]}
           />
-          <Box>
-            <Box variant="awsui-key-label">Value / Route traffic to</Box>
-            <div className="value-cell" style={{ marginTop: 4 }}>{r.value}</div>
-          </Box>
         </SpaceBetween>
       );
       setSplitPanelOpen(true);
@@ -417,6 +425,20 @@ function RecordsTab({
       router.push(`/hosted-zones/${zone.id}/records/${selectedItems[0].id}/edit`);
     }
   };
+
+  useKeyboardShortcuts({
+    onSearch: () => {
+      document.querySelector<HTMLInputElement>('input[placeholder*="Filter records"]')?.focus();
+    },
+    onCreate: openCreate,
+    onEdit: openEdit,
+    onDelete: () => {
+      if (selectedItems.length > 0) {
+        setDeleteInput("");
+        setConfirmOpen(true);
+      }
+    }
+  });
 
   const handleDelete = async () => {
     setDeleting(true);

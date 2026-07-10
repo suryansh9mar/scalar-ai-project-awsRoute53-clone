@@ -68,9 +68,8 @@ export default function EditRecordPage() {
     try {
       const fetchedZone = await api.getZone(zoneId);
       setZone(fetchedZone);
-      // Wait, there's no api.getRecord. We have to list records and find it
-      const res = await api.listRecords(zoneId, { search: "", type: "", page: 1, page_size: 1000 });
-      const fetchedRecord = res.items.find((r) => r.id === recordId);
+      // Use the actual getRecord endpoint instead of listing with page_size=1000 (which exceeds the max 100 limit)
+      const fetchedRecord = await api.getRecord(zoneId, recordId);
       if (fetchedRecord) {
         setRecord(fetchedRecord);
         setSubdomain(toSubdomain(fetchedRecord.name, fetchedZone.name));

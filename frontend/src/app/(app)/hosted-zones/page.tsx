@@ -19,6 +19,7 @@ import { Select } from "@/components/Field";
 import { Modal } from "@/components/Modal";
 import { EmptyState, LoadingBlock } from "@/components/Primitives";
 import { useSplitPanel } from "@/lib/split-panel-context";
+import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import * as api from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useDebounce } from "@/lib/useDebounce";
@@ -80,6 +81,11 @@ export default function HostedZonesPage() {
       setSplitPanelHeader("Hosted zone details");
       setSplitPanelContent(
         <SpaceBetween size="l">
+          <div>
+            <CButton onClick={() => router.push(`/hosted-zones/${z.id}`)}>
+              Edit hosted zone
+            </CButton>
+          </div>
           <KeyValuePairs
             columns={2}
             items={[
@@ -110,6 +116,24 @@ export default function HostedZonesPage() {
       setSplitPanelOpen(false);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useKeyboardShortcuts({
+    onSearch: () => {
+      document.querySelector<HTMLInputElement>('input[placeholder*="Search hosted zones"]')?.focus();
+    },
+    onCreate: () => router.push("/hosted-zones/create"),
+    onEdit: () => {
+      if (selectedItems.length === 1) {
+        router.push(`/hosted-zones/${selectedItems[0].id}`);
+      }
+    },
+    onDelete: () => {
+      if (selectedItems.length > 0) {
+        setDeleteInput("");
+        setConfirmOpen(true);
+      }
+    }
+  });
 
   const handleDelete = async () => {
     setDeleting(true);
