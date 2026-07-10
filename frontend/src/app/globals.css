@@ -1,26 +1,373 @@
-@import "tailwindcss";
+/* ============================================================
+   AWS Cloudscape-inspired design system for the Route53 clone
+   ============================================================ */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand / interactive */
+  --blue: #0972d3;
+  --blue-hover: #065299;
+  --blue-active: #033160;
+  --orange: #ff9900;
+
+  /* Header */
+  --header-bg: #232f3e;
+  --header-bg-hover: #2a3648;
+  --header-text: #ffffff;
+
+  /* Surfaces */
+  --bg-page: #f2f3f3;
+  --bg-container: #ffffff;
+  --bg-subtle: #fafafa;
+  --bg-hover: #f4f4f4;
+  --bg-selected: #f0fbff;
+
+  /* Borders */
+  --border: #c6c6cd;
+  --border-divider: #e9ebed;
+  --border-strong: #7d8998;
+  --border-input: #7d8998;
+
+  /* Text */
+  --text: #0f141a;
+  --text-secondary: #5f6b7a;
+  --text-label: #414d5c;
+  --text-heading: #0f141a;
+  --link: #0972d3;
+
+  /* Status */
+  --success: #037f0c;
+  --success-bg: #f2fcf3;
+  --error: #d91515;
+  --error-bg: #fff7f7;
+  --info: #0972d3;
+  --info-bg: #f0fbff;
+  --warning: #8d6605;
+  --warning-bg: #fffbf0;
+
+  --radius: 8px;
+  --shadow-container: 0 0 1px 1px #e9ebed, 0 1px 8px 2px rgba(0, 7, 22, 0.06);
+  --shadow-modal: 0 4px 20px 1px rgba(0, 7, 22, 0.1);
+  --shadow-popover: 0 2px 8px 1px rgba(0, 7, 22, 0.12);
+
+  --font: "Amazon Ember", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --mono: "Amazon Ember Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  --header-height: 40px;
+  --breadcrumb-bar-height: 38px;
+  --nav-width: 280px;
+  --nav-collapsed-width: 48px;
+
+  /* Transition */
+  --theme-transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ============================================================
+   Dark theme
+   ============================================================ */
+[data-theme="dark"] {
+  /* Brand / interactive */
+  --blue: #539fe5;
+  --blue-hover: #89bdee;
+  --blue-active: #b8d7f5;
+  --orange: #ff9900;
+
+  /* Header — stays dark in both modes (matches real AWS) */
+  --header-bg: #161d26;
+  --header-bg-hover: #1f2b38;
+  --header-text: #ffffff;
+
+  /* Surfaces */
+  --bg-page: #0f141a;
+  --bg-container: #1a2130;
+  --bg-subtle: #151c28;
+  --bg-hover: #1f2d3f;
+  --bg-selected: #0d2137;
+
+  /* Borders */
+  --border: #3d4f60;
+  --border-divider: #293649;
+  --border-strong: #5a7290;
+  --border-input: #5a7290;
+
+  /* Text */
+  --text: #d5dbe3;
+  --text-secondary: #8fa7bf;
+  --text-label: #9ab4c8;
+  --text-heading: #e8edf2;
+  --link: #539fe5;
+
+  /* Status */
+  --success: #29a534;
+  --success-bg: #0a2b0e;
+  --error: #f5706e;
+  --error-bg: #2d1212;
+  --info: #539fe5;
+  --info-bg: #0d2137;
+  --warning: #f0b534;
+  --warning-bg: #2a1e00;
+
+  --shadow-container: 0 0 1px 1px rgba(0,0,0,0.4), 0 1px 8px 2px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 4px 20px 1px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 2px 8px 1px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  transition: var(--theme-transition);
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--text-heading);
+  margin: 0;
+  font-weight: 700;
+}
+h1 {
+  font-size: 28px;
+  line-height: 36px;
+}
+h2 {
+  font-size: 20px;
+  line-height: 26px;
+}
+h3 {
+  font-size: 18px;
+  line-height: 22px;
+}
+
+.btn--link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--link);
+  padding: 4px 8px;
+}
+.btn--link:hover {
+  background: var(--bg-hover);
+  border-color: transparent;
+  color: var(--blue-active);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--bg-container);
+  border-color: var(--border-divider);
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+.btn--primary:disabled,
+.btn--danger:disabled {
+  background: var(--border-divider);
+  border-color: var(--border-divider);
+  color: var(--text-secondary);
+}
+.btn--small {
+  padding: 2px 12px;
+  font-size: 13px;
+}
+
+/* ---------- Form controls ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+.field__label {
+  font-weight: 700;
+  color: var(--text-label);
+  font-size: 14px;
+}
+.field__optional {
+  font-weight: 400;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.field__desc {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.field__error {
+  color: var(--error);
+  font-size: 12px;
+}
+
+.input,
+.textarea,
+.select {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg-container);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  min-height: 32px;
+  width: 100%;
+  outline: none;
+  transition: var(--theme-transition);
+}
+.textarea {
+  min-height: 72px;
+  padding: 8px 12px;
+  resize: vertical;
+  font-family: var(--mono);
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+.input--error {
+  border-color: var(--error);
+}
+.input--error:focus {
+  box-shadow: 0 0 0 1px var(--error);
+}
+.input:disabled,
+.select:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.input-suffix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.input-suffix .input {
+  border: none;
+  border-radius: 0;
+}
+.input-suffix .input:focus {
+  box-shadow: none;
+}
+.input-suffix:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+.input-suffix__addon {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--bg-subtle);
+  border-left: 1px solid var(--border-divider);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ---------- Containers / cards ---------- */
+.container {
+  background: var(--bg-container);
+  border: 1px solid var(--border-divider);
+  border-radius: 16px;
+  box-shadow: var(--shadow-container);
+  transition: var(--theme-transition);
+}
+.container__header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.container__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.container__title h2 {
+  font-size: 18px;
+}
+.container__count {
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 18px;
+}
+.container__body {
+  padding: 20px;
+}
+.container__body--flush {
+  padding: 0;
+}
+
+/* ---------- Page layout ---------- */
+.page {
+  padding: 24px 32px 64px;
+  max-width: 1400px;
+}
+.page__header {
+  margin-bottom: 20px;
+}
+.page__header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.page__desc {
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.spacer {
+  flex: 1;
+}
+
+/* ---------- Info link ---------- */
+.info-link {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--link);
+  cursor: pointer;
+}
+
+/* ---------- Utility ---------- */
+.text-secondary {
+  color: var(--text-secondary);
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.nowrap {
+  white-space: nowrap;
 }
