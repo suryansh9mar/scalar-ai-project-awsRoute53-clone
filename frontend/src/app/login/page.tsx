@@ -104,9 +104,9 @@ export default function LoginPage() {
               }
             >
               <SpaceBetween size="m">
-                {error && (
+                {error ? (
                   <Alert type="error">{error}</Alert>
-                )}
+                ) : null}
 
                 <FormField label="Email">
                   <Input

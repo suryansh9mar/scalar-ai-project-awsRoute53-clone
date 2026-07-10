@@ -131,13 +131,13 @@ export default function ZoneDetailPage() {
         <Header
           variant="h1"
           description={
-            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+            <span style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>
               <Badge color="blue">Public</Badge>
               <span style={{ fontWeight: 400, fontSize: "1rem" }}>{zone.name}</span>
               <CButton variant="inline-link" iconAlign="right">
                 Info
               </CButton>
-            </SpaceBetween>
+            </span>
           }
           // actions={
           //   <SpaceBetween direction="horizontal" size="xs">
@@ -168,7 +168,8 @@ export default function ZoneDetailPage() {
           expanded={detailsExpanded}
           onChange={({ detail }) => setDetailsExpanded(detail.expanded)}
           headerActions={
-            <CButton variant="normal">Edit hosted zone</CButton>
+            <CButton
+             variant="normal">Edit hosted zone</CButton>
           }
         >
           <DetailsContent zone={zone} onUpdated={loadZone} />
