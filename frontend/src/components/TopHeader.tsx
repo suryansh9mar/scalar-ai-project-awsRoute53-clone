@@ -27,8 +27,8 @@ export function TopHeader() {
           href: "/hosted-zones",
           title: "",
           logo: {
-            // 80×32 viewBox, 28px font — renders correctly in the TopNavigation bar
-            src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCAzMiI+PHRleHQgeT0iMjYiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjgiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtZmFtaWx5PSJBbWF6b24gRW1iZXIsSGVsdmV0aWNhLHNhbnMtc2VyaWYiPmF3czwvdGV4dD48L3N2Zz4=",
+            // 45x22 viewBox, 24px font — tighter bounding box makes it render larger in TopNavigation
+            src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSAyMiI+PHRleHQgeT0iMTgiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtZmFtaWx5PSJBbWF6b24gRW1iZXIsSGVsdmV0aWNhLHNhbnMtc2VyaWYiPmF3czwvdGV4dD48L3N2Zz4=",
             alt: "AWS",
           },
         }}

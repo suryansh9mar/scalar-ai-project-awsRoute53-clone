@@ -445,11 +445,24 @@ function RecordsTab({
   });
 
   // Client-side sort
-  const sortField = sortingColumn?.sortingField as keyof DnsRecord | undefined;
+  const sortField = sortingColumn?.sortingField;
   const visibleRecords = sortField
     ? [...filteredRecords].sort((a, b) => {
-        const aVal = String(a[sortField] ?? "");
-        const bVal = String(b[sortField] ?? "");
+        let aVal = "";
+        let bVal = "";
+        
+        // Handle derived columns
+        if (sortField === "alias") {
+          aVal = a.type === "A" || a.type === "AAAA" || a.type === "CNAME" ? "Yes" : "No";
+          bVal = b.type === "A" || b.type === "AAAA" || b.type === "CNAME" ? "Yes" : "No";
+        } else if (sortField === "differentiator" || sortField === "health_check" || sortField === "evaluate_target_health") {
+          aVal = "-";
+          bVal = "-";
+        } else {
+          aVal = String(a[sortField as keyof DnsRecord] ?? "");
+          bVal = String(b[sortField as keyof DnsRecord] ?? "");
+        }
+
         const cmp = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: "base" });
         return sortingDescending ? -cmp : cmp;
       })

@@ -659,13 +659,14 @@ button.awsui-button-variant-primary,
 }
 
 /* Cloudscape internal design tokens for primary button color */
-:root {
-  --awsui-color-background-button-primary-default: #ff9900;
-  --awsui-color-background-button-primary-hover: #e68a00;
-  --awsui-color-background-button-primary-active: #cc7a00;
-  --awsui-color-border-button-primary-default: #dd8800;
-  --awsui-color-border-button-primary-hover: #cc7a00;
-  --awsui-color-text-button-primary-default: #0f141a;
-  --awsui-color-text-button-primary-hover: #0f141a;
+body {
+  --color-background-button-primary-default-vdt0fu: #ff9900 !important;
+  --color-background-button-primary-hover-mo85i6: #e68a00 !important;
+  --color-background-button-primary-active-5cqoqt: #cc7a00 !important;
+  --color-border-button-primary-default-q6o2c5: #dd8800 !important;
+  --color-border-button-primary-hover-9c782p: #cc7a00 !important;
+  --color-text-button-primary-default-a04384: #0f141a !important;
+  --color-text-button-primary-hover-tq3ljo: #0f141a !important;
 }
+
 
