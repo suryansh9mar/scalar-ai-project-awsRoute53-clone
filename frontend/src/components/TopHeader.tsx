@@ -21,7 +21,7 @@ export function TopHeader() {
   const profileText = `${userName} (${accountId})`;
 
   return (
-    <div id="top-header">
+    <div id="top-header" style={{ position: "sticky", top: 0, zIndex: 1002 }}>
       <TopNavigation
         identity={{
           href: "/hosted-zones",
