@@ -84,13 +84,20 @@ The FastAPI backend exposes the following structured endpoints:
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
+| <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/auth/login` | Authenticate user and create mock session. |
+| <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/auth/logout` | Terminate active user session. |
 | <img src="https://img.shields.io/badge/GET-097BED?style=flat-square" width="45"/> | `/api/zones` | Retrieve a paginated list of all hosted zones. |
 | <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/zones` | Create a new hosted zone. |
 | <img src="https://img.shields.io/badge/GET-097BED?style=flat-square" width="45"/> | `/api/zones/{id}` | Retrieve details of a specific hosted zone. |
+| <img src="https://img.shields.io/badge/PUT-FCA121?style=flat-square" width="45"/> | `/api/zones/{id}` | Update an existing hosted zone's details. |
 | <img src="https://img.shields.io/badge/DELETE-F93E3E?style=flat-square" width="55"/> | `/api/zones/{id}` | Delete a hosted zone and its associated records. |
 | <img src="https://img.shields.io/badge/GET-097BED?style=flat-square" width="45"/> | `/api/zones/{id}/records` | Get all DNS records belonging to a hosted zone. |
 | <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/zones/{id}/records` | Create a new DNS record in a specific zone. |
-| <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/zones/import` | Import zone configuration from a BIND file payload. |
+| <img src="https://img.shields.io/badge/PUT-FCA121?style=flat-square" width="45"/> | `/api/records/{id}` | Update an existing DNS record's values. |
+| <img src="https://img.shields.io/badge/DELETE-F93E3E?style=flat-square" width="55"/> | `/api/records/{id}` | Delete a specific DNS record. |
+| <img src="https://img.shields.io/badge/DELETE-F93E3E?style=flat-square" width="55"/> | `/api/records/bulk` | Delete multiple DNS records simultaneously. |
+| <img src="https://img.shields.io/badge/POST-49CC90?style=flat-square" width="45"/> | `/api/zones/{id}/import` | Import zone configuration from a BIND file payload. |
+| <img src="https://img.shields.io/badge/GET-097BED?style=flat-square" width="45"/> | `/api/zones/{id}/export` | Export a hosted zone to JSON/BIND format. |
 
 ---
 
@@ -102,8 +109,8 @@ The FastAPI backend exposes the following structured endpoints:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone [https://github.com/your-username/aws-route53-clone.git](https://github.com/your-username/aws-route53-clone.git)
-cd aws-route53-clone
+git clone https://github.com/suryansh9mar/scalar-ai-project-awsRoute53-clone.git
+cd scalar-ai-project-awsRoute53-clone
 ```
 ### Step 2: Boot the Backend (FastAPI)
 ```bash
@@ -124,7 +131,6 @@ API running at http://localhost:8000/docs
 ```bash
 Open a new terminal and configure the React environment:
 
-Bash
 cd frontend
 npm install
 
