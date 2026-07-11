@@ -45,6 +45,7 @@ The project operates on a modern **Client-Server model** and follows a clean mon
 - [x] **Data Exporting**: Export hosted zones and records to JSON or BIND formats for backups or migrations.
 - [x] **Batch Operations**: Execute fast, simultaneous actions across multiple DNS records using multi-select data tables.
 - [x] **Global Keybindings**: Integrated global keyboard shortcuts (`shift+K` to search, `shift+N` to create,`shift+E` to edit,`Dlt/BackSpace` to delete) for power users.
+- [x] **Dark and Light Theme**: The user can select both dark and light theme based on their prefrence which enhances the user experience. 
 
 ### 🚧 Placeholders & Upcoming
 - [ ] **Dashboard**: Centralized metrics and system status (Coming Soon).
