@@ -1,5 +1,8 @@
 # AWS Route53 Clone
 
+<img width="1917" height="1102" alt="image" src="https://github.com/user-attachments/assets/0fc13bad-cca1-4bda-9d01-ac0da2c9cea0" />
+
+
 ## 1. Project Overview & Architecture
 
 The **AWS Route53 Clone** is a full-stack web application designed to replicate the core management features and user interface of Amazon Web Services (AWS) Route 53. It provides a highly functional, scalable, and responsive interface for managing Domain Name System (DNS) configurations, hosted zones, and complex routing policies.
